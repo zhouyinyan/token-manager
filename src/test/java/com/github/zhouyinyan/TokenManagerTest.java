@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.UUID;
+
 /**
  * Created by zhouyinyan on 2018/4/16.
  */
@@ -37,7 +39,9 @@ public class TokenManagerTest {
          * 实际此时用于生成token的信息仅为到期时间
          */
         TestTokenInfo testTokenInfo2 = new TestTokenInfo();
+        testTokenInfo2.setId(UUID.randomUUID().toString());
         String tokenString2 = tokenManager.generate(testTokenInfo2);
+        System.out.println(tokenString2);
         Assert.assertTrue(tokenString2 != null && tokenString2.length() > 0);
 
     }

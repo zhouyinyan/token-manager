@@ -1,6 +1,7 @@
 package com.github.zhouyinyan;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Created by zhouyinyan on 2018/4/17.
@@ -19,6 +20,8 @@ public class TestTokenInfo implements Serializable{
     private String f4;
 
     private double f5;
+
+    private Date f6;
 
     public String getId() {
         return id;
@@ -68,6 +71,14 @@ public class TestTokenInfo implements Serializable{
         this.f5 = f5;
     }
 
+    public Date getF6() {
+        return f6;
+    }
+
+    public void setF6(Date f6) {
+        this.f6 = f6;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("TestTokenInfo{");
@@ -77,6 +88,7 @@ public class TestTokenInfo implements Serializable{
         sb.append(", f3=").append(f3);
         sb.append(", f4='").append(f4).append('\'');
         sb.append(", f5=").append(f5);
+        sb.append(", f6=").append(f6);
         sb.append('}');
         return sb.toString();
     }

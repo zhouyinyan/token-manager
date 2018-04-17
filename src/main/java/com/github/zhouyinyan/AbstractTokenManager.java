@@ -1,12 +1,11 @@
 package com.github.zhouyinyan;
 
-import com.sun.org.apache.regexp.internal.RE;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.lang.reflect.Field;
-import java.sql.Ref;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by zhouyinyan on 2018/4/17.
@@ -29,21 +28,37 @@ public abstract class AbstractTokenManager<T> implements TokenManager<T> {
         //遍历获取field的value，处理特殊值（转义其中的特殊字符"|", 该特殊字符用于分割符， 处理null值，处理自定义注解等）
         List<String> values = ReflectUtils.fetchValuesAndProcessSpecialValue(fields, t);
 
-        //使用分隔符将原始的value以及过期时间合并为原始信息串（按照name的排序）
-        StringBuffer originalString  = ReflectUtils.concatWithDelimiter(values);
-        originalString.append(expireTimestamp);
+        //使用分隔符将原始的value以及过期时间合并为原始信息串（按照name的排序），并唯一化
+        String originalString  = concatWithDelimiter(values)
+                                .append(tokenContext.getExpireTimestamp())
+                                .append(UUID.randomUUID().toString())
+                                .toString();
 
-        //对原始信息串编码，并唯一化
-
+        //对原始信息串加密并编码
+        String tokenString = encryptAndCode(originalString);
+        tokenContext.setTokenString(tokenString);
 
         //后置处理
-
         postProcess(tokenContext);
-        return null;
+
+        return tokenString;
     }
 
-    protected void specialValueProcess(String[] values){
-        //如果
+    private String encryptAndCode(String originalString) {
+        try {
+            byte[] encryptData = AESUtil.encrypt(originalString.getBytes(), AESUtil.getContantKey());
+            String hexStr = Hex.encodeHexString(encryptData);
+            return hexStr;
+        } catch (Exception e) {
+            throw new TokenException("Token加密异常, e " + e.getMessage());
+        }
+    }
+
+
+    private static StringBuffer concatWithDelimiter(List<String> values){
+        StringBuffer sb = new StringBuffer();
+        values.stream().forEach(v -> sb.append(v).append(TokenConstants.DELIMITER));
+        return sb;
     }
 
     @Override

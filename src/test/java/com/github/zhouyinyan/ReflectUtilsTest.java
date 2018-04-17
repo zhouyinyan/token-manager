@@ -4,6 +4,7 @@ import com.sun.org.apache.regexp.internal.RE;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,10 +23,9 @@ public class ReflectUtilsTest {
         info.setF4("1abc");
         info.setF5(2.3d);
         info.setId("sss");
+        info.setF6(new Date());
         List<String> values = ReflectUtils.fetchValuesAndProcessSpecialValue(fields, info);
         System.out.println(values);
-        StringBuffer sb = ReflectUtils.concatWithDelimiter(values);
-        System.out.println(sb.toString());
 
     }
 }

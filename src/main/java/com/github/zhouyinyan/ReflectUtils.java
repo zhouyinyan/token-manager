@@ -13,16 +13,6 @@ import java.util.stream.Collectors;
 public class ReflectUtils {
 
     /**
-     * 生成原始信息串时使用到的分隔符
-     */
-    public static String DELIMITER = "|";
-
-    /**
-     * 代表字符串对象为NULL时的字符串。
-     */
-    public static String NULLSTRINGPREPRESENT = "`";
-
-    /**
      * 缓存原始信息对象以及其包含的字段信息.
      */
     private static  Map<Class, List<Field>> allFieldsCache = new ConcurrentHashMap<>();
@@ -111,10 +101,10 @@ public class ReflectUtils {
                         }
                     }else {
                         if (Objects.isNull(value)) { //原始字符串对象是null
-                            value = NULLSTRINGPREPRESENT;
+                            value = TokenConstants.NULLSTRINGPREPRESENT;
                         }
-                        if (String.class.cast(value).contains(String.valueOf(DELIMITER))) { //原始字符串包含分割符时抛出异常。
-                            throw new TokenException("value contains illegal character : " + DELIMITER);
+                        if (String.class.cast(value).contains(String.valueOf(TokenConstants.DELIMITER))) { //原始字符串包含分割符时抛出异常。
+                            throw new TokenException("value contains illegal character : " + TokenConstants.DELIMITER);
                         }
                     }
                 }
@@ -134,9 +124,4 @@ public class ReflectUtils {
     }
 
 
-    public static StringBuffer concatWithDelimiter(List<String> values){
-        StringBuffer sb = new StringBuffer();
-        values.stream().forEach(v -> sb.append(v).append(DELIMITER));
-        return sb;
-    }
 }
