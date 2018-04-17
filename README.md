@@ -34,6 +34,8 @@
 ##  实现
 
 - LocalTokenManager， 本地实现（采用对称加密算法来保证token不能伪造），无内部状态，不依赖中心化服务(比如db，redis等)。 但其不支持token失效处理。
-- JDBCTokenManager， 依赖于db的实现。
-- RedisTokenManager,  依赖于Redis的实现。
-- MongodbTokenManager,  依赖于Mongodb的实现。
+
+开发者可以根据自己的需求，实现自己的TokenManager，比如：
+   - JDBCTokenManager， 依赖于db的实现。
+   - RedisTokenManager,  依赖于Redis的实现。
+   - MongodbTokenManager,  依赖于Mongodb的实现。

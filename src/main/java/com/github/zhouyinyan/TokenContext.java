@@ -67,9 +67,6 @@ public class TokenContext<T> implements Serializable {
         this.t = t;
     }
 
-    public static TokenBuilder createBuilder(){
-        return new TokenBuilder();
-    }
 
     /**
      * TokenBuilder,用于构建Token实例
@@ -83,29 +80,29 @@ public class TokenContext<T> implements Serializable {
         private T t;
 
         //当前时间作为创建时间
-        public TokenBuilder createNow(){
+        public TokenBuilder<T> createNow(){
             this.createTimestamp = System.currentTimeMillis();
             return this;
         }
 
-        public TokenBuilder createTimestamp(long createTimestamp){
+        public TokenBuilder<T> createTimestamp(long createTimestamp){
             this.createTimestamp = createTimestamp;
             return this;
         }
 
-        public TokenBuilder expireIn(long expireTimestamp){
+        public TokenBuilder<T> expireIn(long expireTimestamp){
             this.expireTimestamp = expireTimestamp;
             checkExpireTime();
             return this;
         }
 
-        public TokenBuilder expireAfter(TimeUnit unit, long value){
+        public TokenBuilder<T> expireAfter(TimeUnit unit, long value){
             checkCreateTime();
             this.expireTimestamp = this.createTimestamp + unit.toMillis(value);
             return this;
         }
 
-        public TokenBuilder wrap(T t){
+        public TokenBuilder<T> wrap(T t){
             if(Objects.isNull(t)){
                 throw new TokenException("参与token的原始信息对象不能为null");
             }
@@ -113,7 +110,7 @@ public class TokenContext<T> implements Serializable {
             return this;
         }
 
-        public TokenContext build(){
+        public TokenContext<T> build(){
             checkCreateTime();
             checkExpireTime();
             TokenContext tokenContext = new TokenContext();

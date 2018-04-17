@@ -8,12 +8,12 @@ package com.github.zhouyinyan;
 public class LocalTokenManager<T> extends AbstractTokenManager<T> {
 
     @Override
-    protected void postProcess(TokenContext tokenContext) throws TokenException {
+    protected void postProcess(TokenContext<T> tokenContext) throws TokenException {
 
     }
 
     @Override
-    protected void preProcess(TokenContext tokenContext) {
+    protected void preProcess(TokenContext<T> tokenContext) {
 
     }
 
