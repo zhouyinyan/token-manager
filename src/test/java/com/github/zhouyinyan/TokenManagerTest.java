@@ -35,11 +35,11 @@ public class TokenManagerTest {
 
         //====case 2=========
         /**
-         * 即使信息为空，也能正常生成token
-         * 实际此时用于生成token的信息仅为到期时间
+         * 正常生成Token
          */
         TestTokenInfo testTokenInfo2 = new TestTokenInfo();
         testTokenInfo2.setId(UUID.randomUUID().toString());
+        testTokenInfo2.setF4("zyy");
         String tokenString2 = tokenManager.generate(testTokenInfo2);
         System.out.println(tokenString2);
         Assert.assertTrue(tokenString2 != null && tokenString2.length() > 0);
@@ -48,7 +48,15 @@ public class TokenManagerTest {
 
     @Test
     public void testValidate(){
+        TestTokenInfo testTokenInfo2 = new TestTokenInfo();
+        testTokenInfo2.setId(UUID.randomUUID().toString());
+        testTokenInfo2.setF4("zyy");
+        String tokenString2 = tokenManager.generate(testTokenInfo2);
+        System.out.println(tokenString2);
+        Assert.assertTrue(tokenString2 != null && tokenString2.length() > 0);
 
+        TestTokenInfo returnTokenInfo = tokenManager.validate(tokenString2, TestTokenInfo.class);
+        System.out.println(returnTokenInfo);
     }
 
     @Test

@@ -79,6 +79,8 @@ public class TokenContext<T> implements Serializable {
 
         private T t;
 
+        private String tokenString;
+
         //当前时间作为创建时间
         public TokenBuilder<T> createNow(){
             this.createTimestamp = System.currentTimeMillis();
@@ -87,6 +89,7 @@ public class TokenContext<T> implements Serializable {
 
         public TokenBuilder<T> createTimestamp(long createTimestamp){
             this.createTimestamp = createTimestamp;
+            checkCreateTime();
             return this;
         }
 
@@ -110,6 +113,15 @@ public class TokenContext<T> implements Serializable {
             return this;
         }
 
+        public TokenBuilder<T> tokenString(String tokenString){
+            if(Objects.isNull(tokenString) && tokenString.isEmpty()){
+                throw new TokenException("Token字符串为null或者为空");
+            }
+            this.tokenString = tokenString;
+            return this;
+        }
+
+
         public TokenContext<T> build(){
             checkCreateTime();
             checkExpireTime();
@@ -117,6 +129,7 @@ public class TokenContext<T> implements Serializable {
             tokenContext.setCreateTimestamp(createTimestamp);
             tokenContext.setExpireTimestamp(expireTimestamp);
             tokenContext.setT(t);
+            tokenContext.setTokenString(tokenString);
             return tokenContext;
         }
 
@@ -128,7 +141,7 @@ public class TokenContext<T> implements Serializable {
 
         private void checkExpireTime() {
             if(this.expireTimestamp <= 0){
-                expireIn(this.expireTimestamp + DEFAULT_EXPIRE_DURATION);
+                expireIn(this.createTimestamp + DEFAULT_EXPIRE_DURATION);
             }
         }
     }

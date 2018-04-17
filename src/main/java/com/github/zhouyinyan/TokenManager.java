@@ -39,7 +39,7 @@ public interface TokenManager<T> {
      * @return token携带的信息对象
      * @throws TokenException
      */
-    T validate(String tokenString) throws TokenException;
+    T validate(String tokenString, Class<T> tClass) throws TokenException;
 
     /**
      * Token失效，用于一些场景下，Token只能使用一次，使用过后就需要失效

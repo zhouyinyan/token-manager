@@ -10,7 +10,7 @@ public class TokenConstants {
     /**
      * 生成原始信息串时使用到的分隔符
      */
-    public static String DELIMITER = "|";
+    public static String DELIMITER = "~";
 
     /**
      * 代表字符串对象为NULL时的字符串。

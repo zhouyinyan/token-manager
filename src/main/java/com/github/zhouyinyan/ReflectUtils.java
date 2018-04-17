@@ -19,20 +19,43 @@ public class ReflectUtils {
     private static  Map<Class, List<Field>> igoreNotSupportTypesFieldsCache = new ConcurrentHashMap<>();
     private static  Map<Class, List<Field>> igoreNotSupportTypesAndIgoreAnno = new ConcurrentHashMap<>();
 
-
     /**
      * 支持的类型
      */
     private static List<Class<?>> supportTypes;
 
+    /**
+     * 原始类型
+     */
+    private static List<Class<?>> primitiveTypes;
+
+    /**
+     * 包装类型
+     */
+    private static List<Class<?>> primitiveWrapTypes;
+
     static {
-        Class<?>[] types = new Class[]{byte.class, short.class, int.class, long.class, double.class, float.class, boolean.class, char.class ,
-                Byte.class, Short.class, Integer.class, Long.class, Double.class, Float.class, Boolean.class, Character.class,
-                String.class};
+        Class<?>[] primitiveTypesAarray = new Class[]{byte.class, short.class, int.class, long.class,
+                                                    double.class, float.class, boolean.class, char.class};
 
-        supportTypes = Collections.unmodifiableList(Arrays.stream(types).collect(Collectors.toList()));
+        Class<?>[] primitiveWrapTypesAarry = new Class[]{Byte.class, Short.class, Integer.class, Long.class,
+                                                        Double.class, Float.class, Boolean.class, Character.class};
+
+        Class<?>[] types = new Class[primitiveTypesAarray.length + primitiveWrapTypesAarry.length + 1];
+        System.arraycopy(primitiveTypesAarray, 0, types, 0, primitiveTypesAarray.length);
+        System.arraycopy(primitiveWrapTypesAarry, 0, types, primitiveTypesAarray.length, primitiveWrapTypesAarry.length);
+        System.arraycopy(new Class<?>[]{String.class}, 0, types, primitiveTypesAarray.length + primitiveWrapTypesAarry.length,  1);
+
+
+        primitiveTypes = Collections.unmodifiableList(Arrays.stream(primitiveTypesAarray)
+                .collect(Collectors.toList()));
+
+        primitiveWrapTypes = Collections.unmodifiableList(Arrays.stream(primitiveWrapTypesAarry)
+                .collect(Collectors.toList()));
+
+        supportTypes = Collections.unmodifiableList(Arrays.stream(types)
+                                    .collect(Collectors.toList()));
     }
-
 
     public static List<Field> getAllFeilds(Class tClass){
         if (allFieldsCache.containsKey(tClass)){
@@ -83,7 +106,7 @@ public class ReflectUtils {
     }
 
 
-    public static List<String> fetchValuesAndProcessSpecialValue(List<Field> fields, Object target) {
+    public static <T> List<String> fetchValuesAndProcessSpecialValue(List<Field> fields, T target) {
 
         Function<Field, String> function = field -> {
             boolean originalAccess = field.isAccessible();
@@ -93,19 +116,17 @@ public class ReflectUtils {
             try {
                 Object value = field.get(target);
 
-                if(!field.getType().isPrimitive()){ //非原始类型
-
-                    if(!field.getType().equals(String.class)) {
-                        if (Objects.isNull(value)) { //null值处理
-                            value = ""; //非String类型的NULL处理为空支付串(节省字符串长度）
-                        }
-                    }else {
-                        if (Objects.isNull(value)) { //原始字符串对象是null
-                            value = TokenConstants.NULLSTRINGPREPRESENT;
-                        }
-                        if (String.class.cast(value).contains(String.valueOf(TokenConstants.DELIMITER))) { //原始字符串包含分割符时抛出异常。
-                            throw new TokenException("value contains illegal character : " + TokenConstants.DELIMITER);
-                        }
+                if(isPrimitiveWrap(field.getType()) && Objects.isNull(value)) {
+                    //包装类型的NULL处理为空支付串(节省字符串长度）
+                    value = "";
+                }else if(isString(field.getType())){
+                    //原始字符串对象是null
+                    if (Objects.isNull(value)) {
+                        value = TokenConstants.NULLSTRINGPREPRESENT;
+                    }
+                    //原始字符串包含分割符时抛出异常。
+                    if (String.class.cast(value).contains(String.valueOf(TokenConstants.DELIMITER))) {
+                        throw new TokenException("value contains illegal character : " + TokenConstants.DELIMITER);
                     }
                 }
 
@@ -123,5 +144,93 @@ public class ReflectUtils {
 
     }
 
+    public static <T> T fillValuesAndProcessSpecialValue(Class<T> tClass, List<String> values){
+        List<Field> fields = ReflectUtils.getAllFeildsIgoreNotSupportTypesAndIgoreAnno(tClass);
 
+        T target = null;
+        try {
+            target = tClass.newInstance();
+
+            final int[] index = {0};
+            T finalTarget = target;
+            fields.stream().forEach(field -> {
+                boolean originalAccess = field.isAccessible();
+                if(!originalAccess){
+                    field.setAccessible(true);
+                }
+
+                try {
+                    //特殊值处理
+                    String tempVaule = values.get(index[0]);
+
+                    setValue(field, tempVaule, finalTarget);
+
+                    index[0]++;
+                } catch (IllegalAccessException e) {
+                    throw new TokenException(e.getMessage());
+                }finally {
+                    field.setAccessible(originalAccess);
+                }
+            });
+
+            return finalTarget;
+        } catch (InstantiationException e) {
+            throw new TokenException(e.getMessage());
+        } catch (IllegalAccessException e) {
+            throw new TokenException(e.getMessage());
+        }
+    }
+
+    private static <T> void setValue(Field field, String tempVaule, T finalTarget) throws IllegalAccessException {
+        if(isPrimitiveWrap(field.getType())){ //包装类型
+            if(tempVaule.equals("")) {
+                field.set(finalTarget, null);
+            }else{
+                setValueWithPrimitiveOrWrap( field,  tempVaule,  finalTarget);
+            }
+        }else if(isString(field.getType()) ){
+            if(tempVaule.equals(TokenConstants.NULLSTRINGPREPRESENT)) {
+                field.set(finalTarget, null);
+            }else{
+                field.set(finalTarget, tempVaule);
+            }
+        }else if(isPrimitive(field.getType())){
+            setValueWithPrimitiveOrWrap( field,  tempVaule,  finalTarget);
+        }else{
+            //忽略
+        }
+    }
+
+    private static <T> void setValueWithPrimitiveOrWrap(Field field, String tempVaule, T finalTarget) throws IllegalAccessException {
+        Class<?> type = field.getType();
+        if(type.equals(byte.class) || type.equals(Byte.class)){
+            field.setByte(finalTarget, Byte.valueOf(tempVaule));
+        }else if(type.equals(short.class) || type.equals(Short.class)){
+            field.setShort(finalTarget, Short.valueOf(tempVaule));
+        }else if(type.equals(int.class) || type.equals(Integer.class)){
+            field.setInt(finalTarget, Integer.valueOf(tempVaule));
+        }else if(type.equals(long.class) || type.equals(Long.class)){
+            field.setLong(finalTarget, Long.valueOf(tempVaule));
+        }else if(type.equals(float.class) || type.equals(Float.class)){
+            field.setFloat(finalTarget, Float.valueOf(tempVaule));
+        }else if(type.equals(double.class) || type.equals(Double.class)){
+            field.setDouble(finalTarget, Double.valueOf(tempVaule));
+        }else if(type.equals(boolean.class) || type.equals(Boolean.class)){
+            field.setBoolean(finalTarget, Boolean.valueOf(tempVaule));
+        }else if(type.equals(char.class) || type.equals(Character.class)){
+            field.setChar(finalTarget, Character.valueOf(tempVaule.charAt(0)));
+        }
+    }
+
+    private static boolean isPrimitive(Class clazz){
+        return primitiveTypes.contains(clazz);
+    }
+
+    private static boolean isPrimitiveWrap(Class clazz){
+        return primitiveWrapTypes.contains(clazz);
+    }
+
+    private static boolean isString(Class clazz){
+        return String.class.equals(clazz);
+    }
 }
